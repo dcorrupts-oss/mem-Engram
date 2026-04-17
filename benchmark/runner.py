@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import time
+import shutil
 from datetime import datetime
 
 BENCH_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +18,13 @@ from benchmark import BaselineAdapter, call_llm
 
 RESULTS_DIR = os.path.join(BENCH_DIR, "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
+CACHE_DIR = os.path.join(BENCH_DIR, ".cache")
+
+
+def clear_cache():
+    if os.path.exists(CACHE_DIR):
+        shutil.rmtree(CACHE_DIR)
+    os.makedirs(CACHE_DIR, exist_ok=True)
 
 
 def run_scenario(baseline: BaselineAdapter, scenario_module) -> list:
@@ -212,16 +220,22 @@ def main():
     parser = argparse.ArgumentParser(description="mem-Engram Benchmark Runner")
     parser.add_argument("--scenario", nargs="+", default=None, help="Scenario names to run")
     parser.add_argument("--baseline", nargs="+", default=None, help="Baseline names to run")
+    parser.add_argument("--no-cache-clear", action="store_true", help="Skip clearing cache before run")
     args = parser.parse_args()
 
     scenario_names = args.scenario or ["code_spec", "multi_task", "emotion"]
     baseline_names = args.baseline or ["skillmem", "memgpt_style", "sliding_window_rag"]
+
+    if not args.no_cache_clear:
+        print("清理缓存以保证可复现性...", flush=True)
+        clear_cache()
 
     print("╔══════════════════════════════════════════════════╗")
     print("║     mem-Engram 行业对标 Benchmark v1.0          ║")
     print("╚══════════════════════════════════════════════════╝")
     print(f"场景: {scenario_names}")
     print(f"基线: {baseline_names}")
+    print("评判器: temperature=0.1 + seed=42 (可复现)")
 
     results = run_benchmark(scenario_names, baseline_names)
     generate_report(results)

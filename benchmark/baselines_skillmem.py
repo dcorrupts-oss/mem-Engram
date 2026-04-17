@@ -12,7 +12,7 @@ BENCH_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILLMEM_DIR = os.path.dirname(BENCH_DIR)
 sys.path.insert(0, SKILLMEM_DIR)
 
-from __init__ import EngramEngine, EngramEngineConfig
+from engine import EngramEngine, EngramEngineConfig
 from benchmark import BaselineAdapter, call_llm
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
