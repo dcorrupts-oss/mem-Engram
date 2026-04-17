@@ -2,6 +2,21 @@
 Multi-Task Switching Scenario
 """
 
+import re
+import json
+
+
+def _parse_bool(text: str, key: str) -> bool:
+    try:
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+            return bool(data.get(key, False))
+    except:
+        pass
+    return False
+
+
 def get_rounds():
     return [
         {"input": "分析Q3财报：收入5000万，成本3200万，利润率36%。主要增长来自华东区。", "emotion": "NEUTRAL"},
@@ -39,9 +54,15 @@ def judge_multi_task(round_results):
 关键事实: "{fact}"
 AI回复: "{response[:500]}"
 
-请回答JSON: {{"contains": true/false, "reason": "简短说明"}}"""
-            judge_resp, _, _, _ = call_llm([{"role": "user", "content": judge_prompt}], max_tokens=128, use_cache=False)
-            found = "true" in judge_resp.lower() and "false" not in judge_resp.lower()
+请只回答JSON: {{"contains": true, "reason": "简短说明"}} 或 {{"contains": false, "reason": "简短说明"}}"""
+            judge_resp, _, _, _ = call_llm(
+                [{"role": "user", "content": judge_prompt}],
+                max_tokens=128,
+                use_cache=False,
+                temperature=0.1,
+                seed=42,
+            )
+            found = _parse_bool(judge_resp, "contains")
             if found:
                 recall_passed += 1
                 passed_recall_checks += 1

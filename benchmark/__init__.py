@@ -36,11 +36,11 @@ class BaselineAdapter:
         return {}
 
 
-def call_llm(messages: list, max_tokens: int = 512, use_cache: bool = True, temperature: float = 0.7) -> tuple:
+def call_llm(messages: list, max_tokens: int = 512, use_cache: bool = True, temperature: float = 0.7, seed: int = None) -> tuple:
     cache_key = None
     if use_cache:
         import hashlib
-        content = json.dumps(messages, sort_keys=True) + str(max_tokens)
+        content = json.dumps(messages, sort_keys=True) + str(max_tokens) + str(temperature) + str(seed)
         cache_key = hashlib.md5(content.encode()).hexdigest()
         cache_path = os.path.join(CACHE_DIR, f"{cache_key}.json")
         if os.path.exists(cache_path):
@@ -48,14 +48,18 @@ def call_llm(messages: list, max_tokens: int = 512, use_cache: bool = True, temp
                 cached = json.load(f)
             return cached["response"], cached["total_tokens"], cached["prompt_tokens"], cached["completion_tokens"]
 
+    options = {
+        "num_predict": max_tokens,
+        "temperature": temperature,
+    }
+    if seed is not None:
+        options["seed"] = seed
+
     payload = {
         "model": MODEL,
         "messages": messages,
         "stream": False,
-        "options": {
-            "num_predict": max_tokens,
-            "temperature": temperature,
-        }
+        "options": options,
     }
 
     try:

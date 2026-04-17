@@ -2,6 +2,21 @@
 Emotional Companionship Scenario
 """
 
+import re
+import json
+
+
+def _parse_bool(text: str, key: str) -> bool:
+    try:
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+            return bool(data.get(key, False))
+    except:
+        pass
+    return False
+
+
 def get_rounds():
     return [
         {"input": "我今天升职了！太开心了！终于熬出头了！", "emotion": "HIGH"},
@@ -37,11 +52,16 @@ def judge_emotion_companion(round_results):
 用户关键信息: "{fact}"
 AI回复: "{response[:500]}"
 
-请回答JSON: {{"contains": true/false, "reason": "简短说明"}}"""
-            judge_resp, _, _, _ = call_llm([{"role": "user", "content": judge_prompt}], max_tokens=128, use_cache=False)
-            found = False
-            if "true" in judge_resp.lower() and "false" not in judge_resp.lower():
-                found = True
+请只回答JSON: {{"contains": true, "reason": "简短说明"}} 或 {{"contains": false, "reason": "简短说明"}}"""
+            judge_resp, _, _, _ = call_llm(
+                [{"role": "user", "content": judge_prompt}],
+                max_tokens=128,
+                use_cache=False,
+                temperature=0.1,
+                seed=42,
+            )
+            found = _parse_bool(judge_resp, "contains")
+            if found:
                 passed_recall += 1
             recall_detail.append({"fact": fact, "found": found})
 
@@ -51,9 +71,15 @@ AI回复: "{response[:500]}"
 
 AI回复: "{response[:500]}"
 
-请回答JSON: {{"empathetic": true/false, "reason": "简短说明"}}"""
-            sens_resp, _, _, _ = call_llm([{"role": "user", "content": sens_prompt}], max_tokens=128, use_cache=False)
-            if "true" in sens_resp.lower() and "false" not in sens_resp.lower():
+请只回答JSON: {{"empathetic": true, "reason": "简短说明"}} 或 {{"empathetic": false, "reason": "简短说明"}}"""
+            sens_resp, _, _, _ = call_llm(
+                [{"role": "user", "content": sens_prompt}],
+                max_tokens=128,
+                use_cache=False,
+                temperature=0.1,
+                seed=42,
+            )
+            if _parse_bool(sens_resp, "empathetic"):
                 sensitivity_passed += 1
 
         round_details.append({

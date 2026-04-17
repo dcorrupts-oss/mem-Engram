@@ -42,6 +42,8 @@ We don't compare against strawmen.
 
 All baselines use **BM25/TF-IDF industrial-grade retrieval** (not character overlap toys), and all scoring uses **LLM semantic judgment** (not `if keyword in response` hardcoding).
 
+> **Reproducibility note:** Judge LLM calls use `temperature=0.1` with `seed=42` for deterministic scoring. Scores may vary ±2-3 points across different model versions, but core ranking is stable.
+
 ### Comprehensive Ranking
 
 | Dimension | mem-Engram | MemGPT-style | RAG+Window |
